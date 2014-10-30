@@ -3,23 +3,23 @@ Write a program that prints the text "HELLO WORLD" to the console (stdout).
 ----------------------------------------------------------------------
 ## HINTS
 
-To make Node.js program, create a new file with a `.js` extension and start writing JavaScript! Execute your program by running it with the
-`node` command. e.g.:
+To make an Elixir program, create a new file with a `.exs` extension and start writing Elixir! Execute your program by running it with the
+`elixir` command. e.g.:
 
 ```sh
-$ node program.js
+$ elixir program.exs
 ```
 
-You can write to the console in the same way as in the browser:
+You can write to the console using the IO module http://elixir-lang.org/docs/stable/elixir/ :
 
-```js
-console.log("text")
+```
+IO.puts "Test"
 ```
 
 When you are done, you must run:
 
 ```sh
-$ {appname} verify program.js
+$ {appname} verify program.exs
 ```
 
 to proceed. Your program will be tested, a report will be generated, and the lesson will be marked 'completed' if you are successful.
