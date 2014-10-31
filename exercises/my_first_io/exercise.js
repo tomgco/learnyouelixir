@@ -5,33 +5,34 @@ var fs            = require('fs')
   , filecheck     = require('workshopper-exercise/filecheck')
   , execute       = require('workshopper-exercise/execute')
   , comparestdout = require('workshopper-exercise/comparestdout')
-  , wrappedexec   = require('workshopper-wrappedexec')
   , boganipsum    = require('boganipsum')
 
   , testFile      = path.join(os.tmpDir(), '_learnyounode_' + process.pid + '.txt')
+  , join = require('path').join
 
 
 // checks that the submission file actually exists
 exercise = filecheck(exercise)
 
+exercise.solution = join(__dirname, 'solution/solution.exs')
+
 // execute the solution and submission in parallel with spawn()
-exercise = execute(exercise)
+exercise = execute(exercise, { exec: '/usr/local/bin/elixir' })
 
 // compare stdout of solution and submission
 exercise = comparestdout(exercise)
 
-// wrap up the child process in a phantom wrapper that can
-// mess with the global environment and inspect execution
-exercise = wrappedexec(exercise)
-
-// a module we want run just prior to the submission in the
-// child process
-exercise.wrapModule(require.resolve('./wrap'))
-
-
 // set up the data file to be passed to the submission
-exercise.addSetup(function (mode, callback) {
+exercise.setup = function (mode, callback) {
   // mode == 'run' || 'verify'
+  var args = []
+
+  this.submissionArgs = this.solutionArgs = args
+  this.submission = this.args[0] // first arg obviously
+
+  // set this.solution if your solution is elsewhere
+  if (!this.solution)
+    this.solution = path.join(this.dir, './solution/solution.js')
 
   var lines = Math.ceil(Math.random() * 50)
     , txt   = boganipsum({ paragraphs: lines })
@@ -43,29 +44,12 @@ exercise.addSetup(function (mode, callback) {
   this.submissionArgs.unshift(testFile)
   this.solutionArgs.unshift(testFile)
 
+  this.solutionCommand   = [ this.solution ].concat(this.solutionArgs)
+  this.submissionCommand = [ this.submission ].concat(this.submissionArgs)
+
   // file with random text
   fs.writeFile(testFile, txt, 'utf8', callback)
-})
-
-
-// add a processor only for 'verify' calls
-exercise.addVerifyProcessor(function (callback) {
-  var usedSync  = false
-    , usedAsync = false
-
-  Object.keys(exercise.wrapData.fsCalls).forEach(function (m) {
-    if (/Sync$/.test(m)) {
-      usedSync = true
-      this.emit('pass', 'Used synchronous method: fs.' + m + '()')
-    } else {
-      usedAsync = true
-      this.emit('fail', 'Used asynchronous method: fs.' + m + '()')
-    }
-  }.bind(this))
-
-  callback(null, !usedAsync && usedSync)
-})
-
+}
 
 // cleanup for both run and verify
 exercise.addCleanup(function (mode, passed, callback) {
